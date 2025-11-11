@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tambah Pelanggan - Aplikasi Pemeliharaan TR</title>
+    <link rel="stylesheet" href="css/style.css"> 
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="dashboard-header-logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Logo_PLN.svg/2560px-Logo_PLN.svg.png" alt="Logo PLN" class="header-logo">
+        </div>
+    </header>
+
+    <div class="container content">
+        <h2 style="text-align: center;">Tambahkan Data Pelanggan Baru</h2>
+        
+        <div class="add-work-card">
+            <div class="error-message" id="addCustomerError"></div>
+            <form id="addCustomerForm" class="add-work-form">
+                <div class="form-group">
+                    <label for="unitup">UNITUP:</label>
+                    <input type="text" id="unitup" name="UNITUP" placeholder="Contoh: 14130" required>
+                </div>
+                <div class="form-group">
+                    <label for="idpel">IDPEL:</label>
+                    <input type="text" id="idpel" name="IDPEL" placeholder="Contoh: 149000250659" required>
+                </div>
+                <div class="form-group">
+                    <label for="nama">NAMA Perusahaan:</label>
+                    <input type="text" id="nama" name="NAMA" placeholder="Contoh: PT ABC" required>
+                </div>
+                <div class="form-group">
+                    <label for="alamat">ALAMAT:</label>
+                    <textarea id="alamat" name="ALAMAT" rows="3" placeholder="Contoh: Jl. Jenderal Sudirman No. 1, Palembang" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="tarif">TARIF:</label>
+                    <input type="text" id="tarif" name="TARIF" placeholder="Contoh: I3">
+                </div>
+                <div class="form-group">
+                    <label for="daya">DAYA:</label>
+                    <input type="text" id="daya" name="DAYA" placeholder="Contoh: 277000">
+                </div>
+                <div class="form-group">
+                    <label for="faktorKaliDil">FAKTOR KALI DIL:</label>
+                    <input type="text" id="faktorKaliDil" name="FAKTOR KALI DIL" placeholder="Contoh: 3200">
+                </div>
+                <div class="form-group">
+                    <label for="merekkwh">MEREK KWH:</label>
+                    <input type="text" id="merekkwh" name="MEREKKWH" placeholder="Contoh: HEXING">
+                </div>
+                 <div class="form-group">
+                    <label for="thterakwh">THTERAKWH:</label>
+                    <input type="text" id="thterakwh" name="THTERAKWH" placeholder="Contoh: 2023">
+                </div>
+                <div class="form-group">
+                    <label for="nomorkwh">NOMOR KWH:</label>
+                    <input type="text" id="nomorkwh" name="NOMORKWH" placeholder="Contoh: 12345678">
+                </div>
+                <div class="form-group">
+                    <label for="jamnyala">JAM NYALA AGT 2025:</label>
+                    <input type="text" id="jamnyala" name="JAM_NYALA_AGT_2025" placeholder="Contoh: 180">
+                </div>
+                <div class="form-group">
+                    <label for="tikor">TIKOR:</label>
+                    <input type="text" id="tikor" name="TIKOR" placeholder="Contoh: -2.976074, 104.775429">
+                </div>
+                <div class="form-group">
+                    <label for="tikorbaru">TIKOR BARU:</label>
+                    <input type="text" id="tikorbaru" name="TIKOR_BARU" placeholder="Jika ada, format: -2.976074, 104.775429">
+                </div>
+
+                <button type="submit" class="add-work-button">Tambahkan Pelanggan</button>
+            </form>
+        </div>
+
+        <p class="back-link-container"><a href="data_pelanggan.html" class="button">Kembali ke Data Pelanggan</a></p>
+    </div>
+
+    <script src="js/script.js"></script> 
+</body>
+</html>
