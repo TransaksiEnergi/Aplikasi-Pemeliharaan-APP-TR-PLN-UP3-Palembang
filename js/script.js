@@ -896,212 +896,236 @@ async function handleKerjakanPekerjaanPage() {
     }
 }
 
-/**
- * Handle halaman isi data pekerjaan - DENGAN PERHITUNGAN OTOMATIS YANG BENAR
- */
-/**
- * Handle halaman isi data pekerjaan - VERSI PERBAIKAN
- * Menghitung ulang nilai mentah sebelum dikirim ke Google Sheets
- */
+// Ganti fungsi ini di file script.js Anda (Versi Final)
+
 async function handleIsiDataPage() {
-    const workId = new URLSearchParams(window.location.search).get('workId');
-    const mainForm = document.getElementById('workDataForm');
-    
-    if (!workId || !mainForm) {
-        const container = document.querySelector('.container.content');
-        if (container) container.innerHTML = '<p style="text-align:center;color:red;">Error: Elemen form atau Work ID tidak ditemukan.</p>';
-        return;
-    }
-    
-    // Setup tombol kembali
-    const backToAksiLink = document.getElementById('backToAksiLink');
-    if (backToAksiLink) backToAksiLink.href = `kerjakan_pekerjaan.html?workId=${encodeURIComponent(workId)}`;
-    
-    // Load detail pekerjaan untuk header
-    const detailResult = await callBackend('getWorkDetail', { workId });
-    if (detailResult && detailResult.success && detailResult.work) {
-        const work = detailResult.work;
-        
-        document.getElementById('workIdDisplay') && (document.getElementById('workIdDisplay').textContent = work.ID_PEKERJAAN);
-        document.getElementById('customerNameDisplay') && (document.getElementById('customerNameDisplay').textContent = work.NAMA_PELANGGAN);
-        document.getElementById('idpelDisplay') && (document.getElementById('idpelDisplay').textContent = work.ID_PELANGGAN);
-        document.getElementById('customerAddressDisplay') && (document.getElementById('customerAddressDisplay').textContent = work.ALAMAT_PELANGGAN);
-        document.getElementById('hiddenWorkId') && (document.getElementById('hiddenWorkId').value = workId);
-        document.getElementById('hiddenIdpel') && (document.getElementById('hiddenIdpel').value = work.ID_PELANGGAN);
+    const workId = new URLSearchParams(window.location.search).get('workId');
+    const mainForm = document.getElementById('workDataForm');
+    
+    if (!workId || !mainForm) {
+        const container = document.querySelector('.container.content');
+        if (container) container.innerHTML = '<p style="text-align:center;color:red;">Error: Elemen form atau Work ID tidak ditemukan.</p>';
+        return;
+    }
+    
+    // Setup tombol kembali
+    const backToAksiLink = document.getElementById('backToAksiLink');
+    if (backToAksiLink) backToAksiLink.href = `kerjakan_pekerjaan.html?workId=${encodeURIComponent(workId)}`;
+    
+    // Load detail pekerjaan untuk header
+    const detailResult = await callBackend('getWorkDetail', { workId });
+    if (detailResult && detailResult.success && detailResult.work) {
+        const work = detailResult.work;
+        
+        document.getElementById('workIdDisplay') && (document.getElementById('workIdDisplay').textContent = work.ID_PEKERJAAN);
+        document.getElementById('customerNameDisplay') && (document.getElementById('customerNameDisplay').textContent = work.NAMA_PELANGGAN);
+        document.getElementById('idpelDisplay') && (document.getElementById('idpelDisplay').textContent = work.ID_PELANGGAN);
+        document.getElementById('customerAddressDisplay') && (document.getElementById('customerAddressDisplay').textContent = work.ALAMAT_PELANGGAN);
+        document.getElementById('hiddenWorkId') && (document.getElementById('hiddenWorkId').value = workId);
+        document.getElementById('hiddenIdpel') && (document.getElementById('hiddenIdpel').value = work.ID_PELANGGAN);
 
-        const fieldE = document.getElementById('field_e');
-        if (fieldE && work.FAKTOR_KALI_DIL) {
-            fieldE.value = work.FAKTOR_KALI_DIL;
-        }
+        const fieldE = document.getElementById('field_e');
+        if (fieldE && work.FAKTOR_KALI_DIL) {
+            fieldE.value = work.FAKTOR_KALI_DIL;
+        }
 
-        // Load existing execution data
-        const executionDataResult = await callBackend('getWorkExecutionData', { workId: workId });
-        if (executionDataResult && executionDataResult.success && executionDataResult.data) {
-            for (const key in executionDataResult.data) {
-                if (Object.prototype.hasOwnProperty.call(executionDataResult.data, key) && mainForm.elements[key]) {
-                    mainForm.elements[key].value = executionDataResult.data[key] || '';
-                }
-            }
+        // Load existing execution data
+        const executionDataResult = await callBackend('getWorkExecutionData', { workId: workId });
+        
+        if (executionDataResult && executionDataResult.success && executionDataResult.data) {
+            // DATA DITEMUKAN (Mode Edit)
+            console.log("Mode Edit: Memuat data tersimpan.");
+            
+            const data = executionDataResult.data;
+            
+            // Loop yang andal. Ini akan berhasil karena key dari data (misal "TIKOR_BARU")
+            // sekarang SAMA PERSIS dengan HTML name="TIKOR_BARU"
+            for (const key in data) {
+                if (Object.prototype.hasOwnProperty.call(data, key)) {
+                    // Gunakan querySelector yang andal untuk menemukan elemen berdasarkan 'name'
+                    const element = mainForm.querySelector(`[name="${key}"]`);
+                    
+                    if (element) {
+                        // Jika ditemukan, isi nilainya
+                        element.value = data[key] || '';
+                        console.log(`BERHASIL MEMUAT: ${key} = ${data[key]}`);
+                    } else {
+                        console.warn(`Gagal menemukan elemen untuk key: ${key}`);
+                    }
+                }
+            }
 
-            if (typeof window.calculateAutoValues === 'function') {
-                // Panggil fungsi dari HTML untuk memformat UI dengan koma
-                setTimeout(window.calculateAutoValues, 500); 
-            }
-        }
-    } else {
-        const container = document.querySelector('.container.content');
-        if (container) container.innerHTML = `<p style="text-align:center;color:red;">Gagal memuat detail pekerjaan</p>`;
-        return;
-    }
-    
-    // Handle form submit (INI BAGIAN YANG DIPERBAIKI)
-    mainForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Panggil fungsi UI (dari HTML) sekali lagi untuk memastikan UI update
-        if (typeof window.calculateAutoValues === 'function') {
-            window.calculateAutoValues();
-        }
-        
-        // Ambil data form (masih mengandung string koma/persen)
-        const formData = new FormData(mainForm);
-        const dataToSave = Object.fromEntries(formData.entries());
+        } else {
+            // DATA TIDAK DITEMUKAN (Mode Baru)
+            console.log("Mode Baru: Mengatur tanggal dan jam default.");
+            const now = new Date();
+            const today = now.toISOString().split('T')[0]; // Format YYYY-MM-DD
+            const currentTime = now.toTimeString().split(' ')[0].substring(0, 5); // Format HH:MM
+            
+            const tanggalField = document.getElementById('field_av'); // input[name="TANGGAL"]
+            const jamField = document.getElementById('field_aw');     // input[name="JAM"]
+            
+            if (tanggalField) tanggalField.value = today;
+            if (jamField) jamField.value = currentTime;
+        }
 
-        // --- MULAI PERBAIKAN DATA UNTUK GOOGLE SHEETS ---
-        
-        // 1. Helper untuk mengambil nilai mentah (ganti koma -> titik)
-        const getRawFloat = (id) => {
-            const value = document.getElementById(id)?.value || "";
-            // Ganti koma (,) jadi titik (.) untuk parsing
-            const cleanValue = String(value).replace(",", "."); 
-            return parseFloat(cleanValue) || 0;
-        };
+        if (typeof window.calculateAutoValues === 'function') {
+            // Panggil fungsi dari HTML (sekarang aman)
+            window.calculateAutoValues(); 
+        }
+    } else {
+        const container = document.querySelector('.container.content');
+        if (container) container.innerHTML = `<p style="text-align:center;color:red;">Gagal memuat detail pekerjaan</p>`;
+        return;
+    }
+    
+    
+    // Handle form submit (Ini sudah benar, jangan diubah)
+    mainForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Panggil fungsi UI (dari HTML) sekali lagi untuk memastikan UI update
+        if (typeof window.calculateAutoValues === 'function') {
+            window.calculateAutoValues();
+        }
+        
+        // Ambil data form (new FormData akan mengambil 'TIKOR_BARU' dengan benar)
+        const formData = new FormData(mainForm);
+        const dataToSave = Object.fromEntries(formData.entries());
 
-        // 2. Helper untuk membatasi 8 desimal (sesuai permintaan)
-        // parseFloat(num.toFixed(8)) adalah cara aman untuk "batasi 8 desimal"
-        const toFixed8 = (num) => isFinite(num) ? parseFloat(num.toFixed(8)) : 0;
+        // ==========================================================
+        // Fungsi untuk membersihkan angka (memastikan titik desimal)
+        // ==========================================================
+        const getRawFloat = (id) => {
+            const value = document.getElementById(id)?.value || "";
+            // Ganti koma (jika ada) ke titik
+            const cleanValue = String(value).replace(",", "."); 
+            // Hapus spasi
+            const finalValue = cleanValue.replace(/\s/g, "");
+            // Ubah jadi angka
+            return parseFloat(finalValue) || 0;
+        };
+        // ==========================================================
 
-        // 3. Ambil semua nilai INPUT mentah (bersihkan dari koma)
-        const F = getRawFloat('field_f'); // FAKTOR KALI REAL LIHAT
-        const G = getRawFloat('field_g'); // ARUS PRIMER R UKUR
-        const H = getRawFloat('field_h'); // ARUS PRIMER S UKUR
-        const I = getRawFloat('field_i'); // ARUS PRIMER T UKUR
-        const J = getRawFloat('field_j');
-        const K = getRawFloat('field_k');
-        const L = getRawFloat('field_l');
-        const M = getRawFloat('field_m');
-        
-        // Ini adalah INPUT P PRIMER R/S/T UKUR yang Anda tanyakan
-        // Kita ambil nilainya yang bersih (sudah jadi angka)
-        const N = getRawFloat('field_n'); // P PRIMER R UKUR
-        const O = getRawFloat('field_o'); // P PRIMER S UKUR
-        const P = getRawFloat('field_p'); // P PRIMER T UKUR
-        
-        const R = getRawFloat('field_r');
-        const S = getRawFloat('field_s');
-        const T_val = getRawFloat('field_t');
-        const U = getRawFloat('field_u');
-        const V = getRawFloat('field_v');
-        const W = getRawFloat('field_w');
-        const X = getRawFloat('field_x');
-        const Y = getRawFloat('field_y');
-        const Z = getRawFloat('field_z');
-        const AA = getRawFloat('field_aa');
-        const E = getRawFloat('field_e'); // FAKTOR KALI DIL
+        const toFixed8 = (num) => isFinite(num) ? parseFloat(num.toFixed(8)) : 0;
 
-        // 4. TIMPA (OVERWRITE) dataToSave dengan nilai input yang sudah bersih
-        // Ini memastikan P PRIMER R/S/T UKUR dikirim sebagai angka
-        dataToSave['FAKTOR KALI REAL LIHAT'] = F;
-        dataToSave['ARUS PRIMER FASA R (A) UKUR'] = G;
-        dataToSave['ARUS PRIMER FASA S (A) UKUR'] = H;
-        dataToSave['ARUS PRIMER FASA T (A) UKUR'] = I;
-        dataToSave['TEGANGAN PRIMER FASA R (V) UKUR'] = J;
-        dataToSave['TEGANGAN PRIMER FASA S (V) UKUR'] = K;
-        dataToSave['TEGANGAN PRIMER FASA T (V) UKUR'] = L;
-        dataToSave['COS PHI PRIMER UKUR'] = M;
-        dataToSave['P PRIMER R UKUR'] = N;
-        dataToSave['P PRIMER S UKUR'] = O;
-        dataToSave['P PRIMER T UKUR'] = P;
-        dataToSave['ARUS SEKUNDER FASA R (A) UKUR'] = R;
-        dataToSave['ARUS SEKUNDER FASA S (A) UKUR'] = S;
-        dataToSave['ARUS SEKUNDER FASA T (A) UKUR'] = T_val;
-        dataToSave['ARUS SEKUNDER FASA R (A) METER'] = U;
-        dataToSave['ARUS SEKUNDER FASA S (A) METER'] = V;
-        dataToSave['ARUS SEKUNDER FASA T (A) METER'] = W;
-        dataToSave['TEGANGAN KWH METER FASA R (V) METER'] = X;
-        dataToSave['TEGANGAN KWH METER FASA S (V)'] = Y;
-        dataToSave['TEGANGAN KWH METER FASA T (V)'] = Z;
-        dataToSave['COS PHI SEKUNDER'] = AA;
-        dataToSave['FAKTOR KALI DIL'] = E;
+        // Ambil semua nilai INPUT mentah
+        const F = getRawFloat('field_f'); 
+        const G = getRawFloat('field_g'); 
+        const H = getRawFloat('field_h'); 
+        const I = getRawFloat('field_i'); 
+        const J = getRawFloat('field_j');
+        const K = getRawFloat('field_k');
+        const L = getRawFloat('field_l');
+        const M = getRawFloat('field_m');
+        const N = getRawFloat('field_n'); 
+        const O = getRawFloat('field_o'); 
+        const P_val = getRawFloat('field_p'); // 'P' jadi P_val
+        const R = getRawFloat('field_r');
+        const S = getRawFloat('field_s');
+        const T_val = getRawFloat('field_t');
+        const U = getRawFloat('field_u');
+        const V = getRawFloat('field_v');
+        const W = getRawFloat('field_w');
+        const X = getRawFloat('field_x');
+        const Y = getRawFloat('field_y');
+        const Z = getRawFloat('field_z');
+        const AA = getRawFloat('field_aa');
+        const E = getRawFloat('field_e'); // FAKTOR KALI DIL
 
-        // 5. HITUNG ULANG NILAI OTOMATIS (sebagai angka mentah, maks 8 desimal)
-        // Logika ini disalin dari HTML Anda, tapi diubah agar menghasilkan ANGKA
-        
-        const raw_AB = toFixed8((U * X * AA) / 1000);
-        const raw_AC = toFixed8((V * Y * AA) / 1000);
-        const raw_AD = toFixed8((W * Z * AA) / 1000);
-        
-        const raw_Q = toFixed8(N + O + P); 
-        const raw_AE = toFixed8(raw_AB + raw_AC + raw_AD); 
+        // TIMPA (OVERWRITE) dataToSave dengan nilai input yang sudah bersih
+        // Key di sini HARUS SESUAI DENGAN HTML name="..."
+        // 'TIKOR_BARU' sudah benar dari new FormData
+        dataToSave['FAKTOR KALI REAL LIHAT'] = F;
+        dataToSave['ARUS PRIMER FASA R (A) UKUR'] = G;
+        dataToSave['ARUS PRIMER FASA S (A) UKUR'] = H;
+        dataToSave['ARUS PRIMER FASA T (A) UKUR'] = I;
+        dataToSave['TEGANGAN PRIMER FASA R (V) UKUR'] = J;
+        dataToSave['TEGANGAN PRIMER FASA S (V) UKUR'] = K;
+        dataToSave['TEGANGAN PRIMER FASA T (V) UKUR'] = L;
+        dataToSave['COS PHI PRIMER UKUR'] = M;
+        dataToSave['P PRIMER R UKUR'] = N;
+        dataToSave['P PRIMER S UKUR'] = O;
+        dataToSave['P PRIMER T UKUR'] = P_val;
+        dataToSave['ARUS SEKUNDER FASA R (A) UKUR'] = R;
+        dataToSave['ARUS SEKUNDER FASA S (A) UKUR'] = S;
+        dataToSave['ARUS SEKUNDER FASA T (A) UKUR'] = T_val;
+        dataToSave['ARUS SEKUNDER FASA R (A) METER'] = U;
+        dataToSave['ARUS SEKUNDER FASA S (A) METER'] = V;
+        dataToSave['ARUS SEKUNDER FASA T (A) METER'] = W;
+        dataToSave['TEGANGAN KWH METER FASA R (V) METER'] = X;
+        dataToSave['TEGANGAN KWH METER FASA S (V)'] = Y;
+        dataToSave['TEGANGAN KWH METER FASA T (V)'] = Z;
+        dataToSave['COS PHI SEKUNDER'] = AA;
+        dataToSave['FAKTOR KALI DIL'] = E;
 
-        const raw_AF = toFixed8(N !== 0 ? ((raw_AB * F) - N) / N : 0);
-        const raw_AG = toFixed8(O !== 0 ? ((raw_AC * F) - O) / O : 0);
-        const raw_AH = toFixed8(P !== 0 ? ((raw_AD * F) - P) / P : 0);
-        const raw_AI = toFixed8(raw_Q !== 0 ? ((raw_AE * F) - raw_Q) / raw_Q : 0);
-        
-        const raw_AJ = toFixed8(G !== 0 ? ((R * F) - G) / G : 0);
-        const raw_AK = toFixed8(H !== 0 ? ((S * F) - H) / H : 0);
-        const raw_AL = toFixed8(I !== 0 ? ((T_val * F) - I) / I : 0);
-        
-        const arusSekunderMeterTotal = U + V + W;
-        const arusPrimerTotal = G + H + I;
-        const raw_AM = toFixed8(arusPrimerTotal !== 0 ? ((arusSekunderMeterTotal * F) - arusPrimerTotal) / arusPrimerTotal : 0);
+        // HITUNG ULANG NILAI OTOMATIS (Gunakan E untuk Error)
+        const raw_AB = toFixed8((U * X * AA) / 1000);
+        const raw_AC = toFixed8((V * Y * AA) / 1000);
+        const raw_AD = toFixed8((W * Z * AA) / 1000);
+        
+        const raw_Q = toFixed8(N + O + P_val); // Gunakan P_val
+        const raw_AE = toFixed8(raw_AB + raw_AC + raw_AD); 
 
-        let raw_AN = "NORMAL";
-        if (F !== 0 && E !== 0 && F !== E) raw_AN = "CEK CT";
+        const raw_AF = toFixed8(N !== 0 ? ((raw_AB * E) - N) / N : 0);
+        const raw_AG = toFixed8(O !== 0 ? ((raw_AC * E) - O) / O : 0);
+        const raw_AH = toFixed8(P_val !== 0 ? ((raw_AD * E) - P_val) / P_val : 0); // Gunakan P_val
+        const raw_AI = toFixed8(raw_Q !== 0 ? ((raw_AE * E) - raw_Q) / raw_Q : 0);
+        
+        const raw_AJ = toFixed8(G !== 0 ? ((R * E) - G) / G : 0);
+        const raw_AK = toFixed8(H !== 0 ? ((S * E) - H) / H : 0);
+        const raw_AL = toFixed8(I !== 0 ? ((T_val * E) - I) / I : 0);
+        
+        const arusSekunderMeterTotal = U + V + W;
+        const arusPrimerTotal = G + H + I;
+        const raw_AM = toFixed8(arusPrimerTotal !== 0 ? ((arusSekunderMeterTotal * E) - arusPrimerTotal) / arusPrimerTotal : 0);
 
-        let raw_AO = "NORMAL";
-        if (raw_AM > 0.02 && raw_AI > 0.02) raw_AO = "GANTI METER DAN CT";
-        else if (raw_AI > 0.02 && raw_AM <= 0.02) raw_AO = "GANTI METER";
-        else if (raw_AI <= 0.02 && raw_AM > 0.02) raw_AO = "GANTI CT";
+        let raw_AN = "NORMAL";
+        if (F !== 0 && E !== 0 && F !== E) raw_AN = "CEK CT";
 
-        // 6. TIMPA (OVERWRITE) dataToSave dengan nilai kalkulasi yang mentah
-        dataToSave['P PRIMER TOTAL'] = raw_Q;
-        dataToSave['P METER R (kw)'] = raw_AB;
-        dataToSave['P METER S (kw)'] = raw_AC;
-        dataToSave['P METER T (kw)'] = raw_AD;
-        dataToSave['P METER T UKUR TOTAL'] = raw_AE;
-        
-        dataToSave['ERROR KWH METER R'] = raw_AF;
-        dataToSave['ERROR KWH METER S'] = raw_AG;
-        dataToSave['ERROR KWH METER T'] = raw_AH;
-        dataToSave['ERROR KWH METER TOTAL'] = raw_AI;
-        
-        dataToSave['ERROR CT FASA R'] = raw_AJ;
-        dataToSave['ERROR CT FASA S'] = raw_AK;
-        dataToSave['ERROR CT FASA T'] = raw_AL;
-        dataToSave['ERROR CT TOTAL'] = raw_AM;
-        
-        dataToSave['CATATAN CT'] = raw_AN;
+        let raw_AO = "NORMAL";
+        if (raw_AM > 0.02 && raw_AI > 0.02) raw_AO = "GANTI METER DAN CT";
+        else if (raw_AI > 0.02 && raw_AM <= 0.02) raw_AO = "GANTI METER";
+        else if (raw_AI <= 0.02 && raw_AM > 0.02) raw_AO = "GANTI CT";
+
+        // TIMPA (OVERWRITE) dataToSave dengan nilai kalkulasi yang mentah
+        // Key di sini HARUS SESUAI DENGAN HTML name="..."
+        dataToSave['P PRIMER TOTAL'] = raw_Q;
+        dataToSave['P METER R (kw)'] = raw_AB;
+        dataToSave['P METER S (kw)'] = raw_AC;
+        dataToSave['P METER T (kw)'] = raw_AD;
+        dataToSave['P METER T UKUR TOTAL'] = raw_AE;
+        
+        dataToSave['ERROR KWH METER R'] = raw_AF;
+        dataToSave['ERROR KWH METER S'] = raw_AG;
+        dataToSave['ERROR KWH METER T'] = raw_AH;
+        dataToSave['ERROR KWH METER TOTAL'] = raw_AI;
+        
+        dataToSave['ERROR CT FASA R'] = raw_AJ;
+        dataToSave['ERROR CT FASA S'] = raw_AK;
+        dataToSave['ERROR CT FASA T'] = raw_AL;
+        dataToSave['ERROR CT TOTAL'] = raw_AM;
+        
+        dataToSave['CATATAN CT'] = raw_AN;
         dataToSave['REKOMENDASI'] = raw_AO;
 
-        // --- SELESAI PERBAIKAN DATA ---
+        // 'dataToSave' sekarang memiliki 'TIKOR_BARU' (underscore) dari name HTML
+        // Ini akan dikirim ke Code.gs
+        console.log("Data yang dikirim ke Google Sheets (FINAL):", dataToSave);
 
-        console.log("Data yang dikirim ke Google Sheets:", dataToSave);
-
-        // 7. Kirim data yang sudah bersih ke backend
-        displayMessage('Menyimpan data...', 'info');
-        const result = await callBackend('saveWorkExecutionData', dataToSave);
-        
-        if (result && result.success) {
-            displayMessage(result.message || 'Data berhasil disimpan!', 'success');
-            setTimeout(() => { 
-                window.location.href = `kerjakan_pekerjaan.html?workId=${encodeURIComponent(workId)}`; 
-            }, 1200);
-        } else {
-            displayMessage((result && result.message) || 'Gagal menyimpan data.', 'error');
-        }
-    });
+        // Kirim data yang sudah bersih ke backend
+        displayMessage('Menyimpan data...', 'info');
+        const result = await callBackend('saveWorkExecutionData', dataToSave);
+        
+        if (result && result.success) {
+            displayMessage(result.message || 'Data berhasil disimpan!', 'success');
+            setTimeout(() => { 
+                window.location.href = `kerjakan_pekerjaan.html?workId=${encodeURIComponent(workId)}`; 
+style           }, 1200);
+        } else {
+            displayMessage((result && result.message) || 'Gagal menyimpan data.', 'error');
+        }
+    });
 }
 /**
  * Handle halaman berita acara
